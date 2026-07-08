@@ -7,27 +7,52 @@
 
     <title>@yield('title')</title>
 
+    <!-- Bootstrap -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.7/dist/css/bootstrap.min.css" rel="stylesheet">
 
+    <!-- Bootstrap Icons -->
     <link rel="stylesheet"
         href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.13.1/font/bootstrap-icons.min.css">
 
+    <!-- Google Font -->
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap"
+        rel="stylesheet">
+
+    <link
+        rel="stylesheet"
+        href="https://unpkg.com/leaflet/dist/leaflet.css"
+    />
+
+    <!-- CSS -->
+    <link rel="stylesheet" href="{{ asset('assets/css/style.css') }}">
+
     @stack('styles')
+
 </head>
 
 <body>
 
     @include('layouts.sidebar')
 
-    @include('layouts.navbar')
+    <div class="main-wrapper">
 
-    <main class="main-content">
-        @yield('content')
-    </main>
+        @include('layouts.navbar')
+
+        <div class="content">
+
+            @yield('content')
+
+        </div>
+
+    </div>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.7/dist/js/bootstrap.bundle.min.js"></script>
 
+    <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     @stack('scripts')
+    @yield('scripts')
 
 </body>
 
