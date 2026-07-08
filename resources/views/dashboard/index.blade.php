@@ -145,19 +145,70 @@
         <div class="news-list">
 
             <div class="news-item">
-                <strong>Singapore Port</strong>
-                <p>Container delay due to heavy rain.</p>
+
+                <div class="news-country">
+
+                    🇸🇬 Singapore Port
+
+                    <span class="risk high">High Risk</span>
+
+                </div>
+
+                <p>Container delay due to heavy rain causing export congestion.</p>
+
+                <small>
+                    <i class="bi bi-clock"></i>
+                    2 minutes ago
+                </small>
+
             </div>
 
             <div class="news-item">
-                <strong>China Export</strong>
-                <p>Export activity increased by 12%.</p>
+
+                <div class="news-country">
+
+                    🇨🇳 China Export
+
+                    <span class="risk medium">Medium</span>
+
+                </div>
+
+                <p>Export activity increased by 12% compared to last month.</p>
+
+                <small>
+                    <i class="bi bi-clock"></i>
+                    1 hour ago
+                </small>
+
             </div>
 
             <div class="news-item">
-                <strong>USA Import</strong>
-                <p>Import volume remains stable.</p>
+
+                <div class="news-country">
+
+                    🇺🇸 USA Import
+
+                    <span class="risk low">Low</span>
+
+                </div>
+
+                <p>Import volume remains stable across major ports.</p>
+
+                <small>
+                    <i class="bi bi-clock"></i>
+                    Today
+                </small>
+
             </div>
+
+        </div>
+
+        <div class="view-all">
+
+            <a href="#">
+                View All
+                <i class="bi bi-arrow-right"></i>
+            </a>
 
         </div>
 
@@ -247,6 +298,52 @@ new Chart(riskCtx, {
             }
 
         }
+
+    }
+
+});
+
+const sentimentCtx = document.getElementById('sentimentChart');
+
+new Chart(sentimentCtx, {
+
+    type:'doughnut',
+
+    data:{
+
+        labels:['Positive','Neutral','Negative'],
+
+        datasets:[{
+
+            data:[63,24,13],
+
+            backgroundColor:[
+                '#22C55E',
+                '#F59E0B',
+                '#EF4444'
+            ],
+
+            borderWidth:0
+
+        }]
+
+    },
+
+    options:{
+
+        responsive:true,
+
+        maintainAspectRatio:false,
+
+        plugins:{
+
+            legend:{
+                position:'bottom'
+            }
+
+        },
+
+        cutout:'70%'
 
     }
 
