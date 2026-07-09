@@ -4,7 +4,29 @@
 
 @section('content')
 
-<h1 class="dashboard-title">Countries</h1>
+<div class="page-header">
+
+    <div>
+
+        <h1 class="dashboard-title">
+            Countries
+        </h1>
+
+        <p class="page-subtitle">
+            Monitor country risk, weather, currency and logistics information.
+        </p>
+
+    </div>
+
+    <a href="{{ route('countries.create') }}" class="btn-add">
+
+        <i class="bi bi-plus-lg"></i>
+
+        Add Country
+
+    </a>
+
+</div>
 
 <p class="page-subtitle">
     Monitor country risk, weather, currency and logistics information.
@@ -100,11 +122,34 @@
 
             <td>{{ $country->currency }}</td>
 
-            <td>
+            <td class="action-buttons">
+
                 <a href="{{ route('countries.show',$country->id) }}"
-                    class="btn-view">
-                    View
+                class="btn-view">
+                    <i class="bi bi-eye"></i>
                 </a>
+
+                <a href="{{ route('countries.edit',$country->id) }}"
+                class="btn-edit">
+                    <i class="bi bi-pencil"></i>
+                </a>
+
+                <form action="{{ route('countries.destroy',$country->id) }}"
+                    method="POST"
+                    style="display:inline;">
+
+                    @csrf
+                    @method('DELETE')
+
+                    <button class="btn-delete"
+                            onclick="return confirm('Delete this country?')">
+
+                        <i class="bi bi-trash"></i>
+
+                    </button>
+
+                </form>
+
             </td>
 
         </tr>

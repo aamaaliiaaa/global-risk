@@ -23,12 +23,20 @@
 
         <div class="detail-item">
             <strong>Weather</strong>
-            <span>{{ $country->weather }}</span>
+            <span>
+                {{ $condition }}
+                🌡️ {{ $weather['current']['temperature_2m'] }}°C
+                <br>
+                💨 {{ $weather['current']['wind_speed_10m'] }} km/h
+            </span>
         </div>
 
         <div class="detail-item">
             <strong>Currency</strong>
-            <span>{{ $country->currency }}</span>
+            <span>{{ $country->currency }}
+                <br>
+                1 USD = {{ number_format($rate, 2) }} {{ $country->currency }}
+            </span>
         </div>
 
     </div>

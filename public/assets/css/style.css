@@ -524,6 +524,38 @@ body{
     color:#1D4ED8;
 }
 
+.action-buttons{
+    display:flex;
+    gap:8px;
+}
+
+.btn-view,
+.btn-edit,
+.btn-delete{
+    width:38px;
+    height:38px;
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    border:none;
+    border-radius:10px;
+    color:#fff;
+    text-decoration:none;
+}
+
+.btn-view{
+    background:#2563EB;
+}
+
+.btn-edit{
+    background:#F59E0B;
+}
+
+.btn-delete{
+    background:#EF4444;
+    cursor:pointer;
+}
+
 .sentiment-card{
     display:flex;
     flex-direction:column;
@@ -726,4 +758,61 @@ body{
 
     margin-top:20px;
 
+}
+
+.page-header{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    margin-bottom:25px;
+}
+
+.btn-add{
+    background:#2563EB;
+    color:#fff;
+    text-decoration:none;
+    padding:12px 20px;
+    border-radius:12px;
+    font-weight:600;
+    display:flex;
+    align-items:center;
+    gap:8px;
+    transition:.3s;
+}
+
+.btn-add:hover{
+    background:#1D4ED8;
+    color:#fff;
+}
+
+.country-form{
+    background:#fff;
+    padding:30px;
+    border-radius:20px;
+    box-shadow:0 8px 25px rgba(15,23,42,.05);
+}
+
+.form-group{
+    margin-bottom:20px;
+}
+
+.form-group label{
+    display:block;
+    margin-bottom:8px;
+    font-weight:600;
+}
+
+.form-group input,
+.form-group select{
+    width:100%;
+    height:48px;
+    border:1px solid #E2E8F0;
+    border-radius:12px;
+    padding:0 15px;
+    outline:none;
+}
+
+.form-group input:focus,
+.form-group select:focus{
+    border-color:#2563EB;
 }
