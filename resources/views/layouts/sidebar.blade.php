@@ -20,7 +20,8 @@
 
         <li>
 
-            <a href="/dashboard" class="active">
+            <a href="{{ route('dashboard.index') }}"
+                class="{{ request()->routeIs('dashboard.index') ? 'active' : '' }}">
 
                 <i class="bi bi-grid-fill"></i>
 
@@ -32,19 +33,18 @@
 
         <li>
 
-            <a href="/country">
-
-                <i class="bi bi-globe-americas"></i>
-
+            <a href="{{ route('countries.index') }}"
+                class="{{ request()->routeIs('countries.*') ? 'active' : '' }}">
+                <i class="bi bi-globe"></i>
                 Countries
-
             </a>
 
         </li>
 
         <li>
 
-            <a href="/weather">
+            <a href="{{ route('weather.index') }}"
+                class="{{ request()->routeIs('weather.*') ? 'active' : '' }}">
 
                 <i class="bi bi-cloud-rain"></i>
 
@@ -56,7 +56,8 @@
 
         <li>
 
-            <a href="/currency">
+            <a href="{{ route('currency.index') }}"
+                class="{{ request()->routeIs('currency.*') ? 'active' : '' }}">
 
                 <i class="bi bi-currency-exchange"></i>
 
@@ -68,7 +69,8 @@
 
         <li>
 
-            <a href="/news">
+            <a href="{{ route('news.index') }}"
+                class="{{ request()->routeIs('news.*') ? 'active' : '' }}">
 
                 <i class="bi bi-newspaper"></i>
 
@@ -80,7 +82,8 @@
 
         <li>
 
-            <a href="/ports">
+            <a href="{{ route('ports.index') }}"
+                class="{{ request()->routeIs('ports.*') ? 'active' : '' }}">
 
                 <i class="bi bi-geo-alt-fill"></i>
 
@@ -92,7 +95,8 @@
 
         <li>
 
-            <a href="/compare">
+            <a href="{{ route('compare.index') }}"
+                class="{{ request()->routeIs('compare.*') ? 'active' : '' }}">
 
                 <i class="bi bi-bar-chart"></i>
 
@@ -104,7 +108,8 @@
 
         <li>
 
-            <a href="/watchlist">
+            <a href="{{ route('watchlist.index') }}"
+                class="{{ request()->routeIs('watchlist.*') ? 'active' : '' }}">
 
                 <i class="bi bi-star-fill"></i>
 
@@ -116,7 +121,8 @@
 
         <li>
 
-            <a href="/admin">
+            <a href="{{ route('admin.index') }}"
+                class="{{ request()->routeIs('admin.*') ? 'active' : '' }}">
 
                 <i class="bi bi-person-fill-gear"></i>
 

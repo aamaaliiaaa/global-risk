@@ -22,7 +22,7 @@
         rel="stylesheet"
         href="https://unpkg.com/leaflet/dist/leaflet.css"
     />
-
+    
     <!-- CSS -->
     <link rel="stylesheet" href="{{ asset('assets/css/style.css') }}">
 
@@ -51,6 +51,7 @@
     <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
 
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    
     @stack('scripts')
     @yield('scripts')
 

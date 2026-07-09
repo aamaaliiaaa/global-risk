@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\CountryController;
 use App\Http\Controllers\ProfileController;
 use Illuminate\Support\Facades\Route;
 
@@ -20,22 +21,24 @@ Route::get('/', function () {
     return redirect('/dashboard');
 });
 
-Route::get('/dashboard',[DashboardController::class,'index']);
+Route::get('/dashboard',[DashboardController::class,'index'])->name('dashboard.index');
 
-Route::get('/country',[CountryController::class,'index']);
+Route::get('/countries',[CountryController::class,'index'])->name('countries.index');
+Route::get('/countries/{country}', [CountryController::class, 'show'])
+    ->name('countries.show');
 
-Route::get('/weather',[WeatherController::class,'index']);
+Route::get('/weather',[WeatherController::class,'index'])->name('weather.index');
 
-Route::get('/currency',[CurrencyController::class,'index']);
+Route::get('/currency',[CurrencyController::class,'index'])->name('currency.index');
 
-Route::get('/news',[NewsController::class,'index']);
+Route::get('/news',[NewsController::class,'index'])->name('news.index');
 
-Route::get('/ports',[PortController::class,'index']);
+Route::get('/ports',[PortController::class,'index'])->name('ports.index');
 
-Route::get('/compare',[CompareController::class,'index']);
+Route::get('/compare',[CompareController::class,'index'])->name('compare.index');
 
-Route::get('/watchlist',[WatchlistController::class,'index']);
+Route::get('/watchlist',[WatchlistController::class,'index'])->name('watchlist.index');
 
-Route::get('/admin',[AdminController::class,'index']);
+Route::get('/admin',[AdminController::class,'index'])->name('admin.index');
 
 require __DIR__.'/auth.php';
