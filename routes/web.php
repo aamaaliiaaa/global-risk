@@ -3,6 +3,7 @@
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\CountryController;
 use App\Http\Controllers\ProfileController;
+use App\Http\Controllers\PortController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', function () {
@@ -46,6 +47,7 @@ Route::get('/currency',[CurrencyController::class,'index'])->name('currency.inde
 Route::get('/news',[NewsController::class,'index'])->name('news.index');
 
 Route::get('/ports',[PortController::class,'index'])->name('ports.index');
+Route::get('/ports/{port}', [PortController::class, 'show'])->name('ports.show');
 
 Route::get('/compare',[CompareController::class,'index'])->name('compare.index');
 

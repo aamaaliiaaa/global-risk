@@ -41,6 +41,28 @@ class CountryController extends Controller
         $exchangeRate = Http::get(
             'https://open.er-api.com/v6/latest/USD',
         )->json();
+        
+        $news= Http::get(
+            "https://gnews.io/api/v4/search",
+            [
+                "q" => $country->name . " shipping",
+                "lang" => "en",
+                "max" => 5,
+                "apikey" => env('GNEWS_API_KEY')
+            ]
+        )->json();
+        if (empty($news['articles'])) {
+            $news = Http::get(
+                "https://gnews.io/api/v4/search",
+                [
+                    "q" => $country->name,
+                    "lang" => "en",
+                    "max" => 5,
+                    "apikey" => env('GNEWS_API_KEY')
+                ]
+            )->json();
+        }
+
         $rate = $exchange['rates'][$country->currency] ?? null;
 
         $weatherCode = $weather['current']['weather_code'];
@@ -65,7 +87,7 @@ class CountryController extends Controller
 
         return view(
             'country.show',
-            compact('country', 'weather', 'condition', 'rate')
+            compact('country', 'weather', 'condition', 'news')
         );
         
     }

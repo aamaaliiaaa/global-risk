@@ -6,13 +6,18 @@ use Illuminate\Database\Eloquent\Model;
 
 class Country extends Model
 {
-    Protected $fillable = [
+    protected $fillable = [
         'flag',
         'name',
         'risk',
-        'wheather',
+        'weather',
         'currency',
         'latitude',
         'longitude',
     ];
+
+    public function ports()
+    {
+        return $this->hasMany(Port::class);
+    }
 }

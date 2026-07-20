@@ -25,6 +25,7 @@
             <strong>Weather</strong>
             <span>
                 {{ $condition }}
+                <br>
                 🌡️ {{ $weather['current']['temperature_2m'] }}°C
                 <br>
                 💨 {{ $weather['current']['wind_speed_10m'] }} km/h
@@ -34,8 +35,6 @@
         <div class="detail-item">
             <strong>Currency</strong>
             <span>{{ $country->currency }}
-                <br>
-                1 USD = {{ number_format($rate, 2) }} {{ $country->currency }}
             </span>
         </div>
 
@@ -62,15 +61,31 @@
 
     <h4>Latest News</h4>
 
+    @if(isset($news['articles']) && count($news['articles']) > 0)
+
     <ul class="news-list">
 
-        <li>Export activity remains stable.</li>
+    @foreach($news['articles'] as $article)
 
-        <li>Weather conditions are normal.</li>
+    <li>
 
-        <li>Port operations running normally.</li>
+        <strong>{{ $article['title'] }}</strong>
+
+        <br>
+
+        <small>{{ $article['source']['name'] }}</small>
+
+    </li>
+
+    @endforeach
 
     </ul>
+
+    @else
+
+    <p>No news available.</p>
+
+    @endif
 
 </div>
 
