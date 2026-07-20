@@ -16,8 +16,11 @@ return new class extends Migration
             $table->string('flag')->nullable();
             $table->string('name');
             $table->string('risk');
+            $table->integer('risk_score')->default(25);
             $table->string('weather');
             $table->string('currency');
+            $table->double('latitude')->nullable();
+            $table->double('longitude')->nullable();
             $table->timestamps();
         });
     }

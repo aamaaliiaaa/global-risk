@@ -1,64 +1,94 @@
 <?php
 
 namespace App\Http\Controllers;
+
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Http;
 use App\Models\Port;
+use App\Models\Country;
+use App\Services\RiskIntelligenceService;
 
 class PortController extends Controller
 {
-    public function index()
-    {
-        $ports = Port::with('country')->get();
+    protected $intelligenceService;
 
-        return view('ports.index', compact('ports'));
+    public function __construct(RiskIntelligenceService $intelligenceService)
+    {
+        $this->intelligenceService = $intelligenceService;
+    }
+
+    public function index(Request $request)
+    {
+        $query = Port::with('country');
+
+        // Search by port name, city, or country name
+        if ($request->search) {
+            $query->where(function ($q) use ($request) {
+                $q->where('name', 'like', '%' . $request->search . '%')
+                  ->orWhere('city', 'like', '%' . $request->search . '%')
+                  ->orWhereHas('country', function ($cq) use ($request) {
+                      $cq->where('name', 'like', '%' . $request->search . '%');
+                  });
+            });
+        }
+
+        // Filter status
+        if ($request->status) {
+            $query->where('status', $request->status);
+        }
+
+        // Filter by country dropdown
+        if ($request->country_id) {
+            $query->where('country_id', $request->country_id);
+        }
+
+        // Paginated list for the table (25 per page)
+        $ports = $query->orderBy('name')->paginate(25)->withQueryString();
+
+        // Separate: all ports with coordinates for the map (no pagination, all points)
+        $mapQuery = Port::with('country')
+            ->whereNotNull('latitude')
+            ->whereNotNull('longitude')
+            ->where('latitude', '!=', 0)
+            ->where('longitude', '!=', 0);
+
+        if ($request->search) {
+            $mapQuery->where(function ($q) use ($request) {
+                $q->where('name', 'like', '%' . $request->search . '%')
+                  ->orWhere('city', 'like', '%' . $request->search . '%')
+                  ->orWhereHas('country', function ($cq) use ($request) {
+                      $cq->where('name', 'like', '%' . $request->search . '%');
+                  });
+            });
+        }
+
+        if ($request->status) {
+            $mapQuery->where('status', $request->status);
+        }
+
+        if ($request->country_id) {
+            $mapQuery->where('country_id', $request->country_id);
+        }
+
+        $mapPorts = $mapQuery->select('id', 'name', 'city', 'latitude', 'longitude', 'status', 'risk_score', 'country_id')
+            ->with('country:id,name,flag')
+            ->get();
+
+        $totalPorts = Port::count();
+
+        // Countries that actually have ports, for the dropdown
+        $countries = Country::whereHas('ports')
+            ->orderBy('name')
+            ->get(['id', 'name', 'flag']);
+
+        return view('ports.index', compact('ports', 'mapPorts', 'totalPorts', 'countries'));
     }
 
     public function show(Port $port)
     {
-    // Weather
-        $weather = Http::get(
-            'https://api.open-meteo.com/v1/forecast',
-            [
-                'latitude'=>$port->latitude,
-                'longitude'=>$port->longitude,
-                'current'=>'temperature_2m,wind_speed_10m,weather_code'
-            ]
-        )->json();
+        // Get weather at port coordinates
+        $weather = $this->intelligenceService->getWeather($port);
+        $condition = $weather['condition'] ?? 'Unknown';
 
-        $condition = 'Unknown';
-
-        if(isset($weather['current']['weather_code'])){
-
-            $code = $weather['current']['weather_code'];
-
-            $condition = match($code){
-
-                0=>'☀️ Clear',
-
-                1,2,3=>'🌤 Partly Cloudy',
-
-                45,48=>'🌫 Fog',
-
-                51,53,55=>'🌦 Drizzle',
-
-                61,63,65=>'🌧 Rain',
-
-                71,73,75=>'❄ Snow',
-
-                default=>'☁ Cloudy'
-
-            };
-
-        }
-
-        return view(
-            'ports.show',
-            compact(
-                'port',
-                'weather',
-                'condition'
-            )
-        );
+        return view('ports.show', compact('port', 'weather', 'condition'));
     }
 }

@@ -10,6 +10,7 @@ class Country extends Model
         'flag',
         'name',
         'risk',
+        'risk_score',
         'weather',
         'currency',
         'latitude',

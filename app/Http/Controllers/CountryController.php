@@ -4,135 +4,106 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use App\Models\Country;
-use Illuminate\Support\Facades\Http;
+use App\Models\CountryIndicator;
+use App\Models\RiskScore;
+use App\Models\NewsCache;
+use App\Services\RiskScoringService;
+use App\Services\RiskIntelligenceService;
 
 class CountryController extends Controller
 {
+    protected $scoringService;
+    protected $intelligenceService;
+
+    public function __construct(RiskScoringService $scoringService, RiskIntelligenceService $intelligenceService)
+    {
+        $this->scoringService = $scoringService;
+        $this->intelligenceService = $intelligenceService;
+    }
+
+    /**
+     * List all countries — reads only from DB, no live API calls.
+     */
     public function index(Request $request)
     {
         $query = Country::query();
 
-        // Search
         if ($request->search) {
             $query->where('name', 'like', '%' . $request->search . '%');
         }
 
-        // Filter Risk
         if ($request->risk) {
             $query->where('risk', $request->risk);
         }
 
-        $countries = $query->get();
+        $countries = $query->orderBy('name')->get();
 
         return view('country.index', compact('countries'));
     }
-    
+
+    /**
+     * Show one country — makes live API calls only for this single country.
+     */
     public function show(Country $country)
     {
-        $weather = Http::get(
-            'https://api.open-meteo.com/v1/forecast',
-            [
-                'latitude' => $country->latitude,
-                'longitude' => $country->longitude,
-                "current"=>"temperature_2m,wind_speed_10m,weather_code"
-            ]
-        )->json();
+        set_time_limit(30); // Allow up to 30 seconds for API calls for a single country
 
-        $exchangeRate = Http::get(
-            'https://open.er-api.com/v6/latest/USD',
-        )->json();
-        
-        $news= Http::get(
-            "https://gnews.io/api/v4/search",
-            [
-                "q" => $country->name . " shipping",
-                "lang" => "en",
-                "max" => 5,
-                "apikey" => env('GNEWS_API_KEY')
-            ]
-        )->json();
-        if (empty($news['articles'])) {
-            $news = Http::get(
-                "https://gnews.io/api/v4/search",
-                [
-                    "q" => $country->name,
-                    "lang" => "en",
-                    "max" => 5,
-                    "apikey" => env('GNEWS_API_KEY')
-                ]
-            )->json();
+        // 1. Real-time weather (1 API call)
+        $weather = $this->intelligenceService->getWeather($country);
+
+        // 2. Exchange rates (cached internally by service)
+        $rates = $this->intelligenceService->getExchangeRates();
+        $rate  = $rates[strtoupper($country->currency)] ?? null;
+
+        // 3. News + sentiment (cached internally)
+        $news = $this->intelligenceService->getNews($country);
+
+        // 4. Calculate live risk score for this country only
+        $riskDetails = $this->scoringService->calculateCountryRisk($country);
+
+        // 5. World Bank indicators from DB (already seeded/cached)
+        $indicators = CountryIndicator::where('country_id', $country->id)
+            ->orderBy('year', 'desc')
+            ->get()
+            ->map(fn($i) => [
+                'year'       => $i->year,
+                'gdp'        => $i->gdp,
+                'inflation'  => $i->inflation,
+                'population' => $i->population,
+                'exports'    => $i->exports,
+                'imports'    => $i->imports,
+            ])->toArray();
+
+        $latestIndicator = collect($indicators)->first();
+        $population = $latestIndicator['population'] ?? null;
+        $gdp        = $latestIndicator['gdp']        ?? null;
+
+        // 6. Risk score history for chart
+        $history = RiskScore::where('country_id', $country->id)
+            ->orderBy('date', 'desc')
+            ->take(6)
+            ->get()
+            ->reverse();
+
+        $historyMonths = $history->map(fn($s) => \Carbon\Carbon::parse($s->date)->format('M d'))->toArray();
+        $historyScores = $history->pluck('total_risk')->toArray();
+
+        if (empty($historyMonths)) {
+            $historyMonths = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'];
+            $historyScores = [20, 25, 30, 28, 24, 22];
         }
 
-        $rate = $exchange['rates'][$country->currency] ?? null;
-
-        $weatherCode = $weather['current']['weather_code'];
-
-        $condition = match ($weatherCode) {
-
-            0 => '☀️ Clear',
-
-            1,2,3 => '🌤️ Partly Cloudy',
-
-            45,48 => '🌫️ Fog',
-
-            51,53,55 => '🌦️ Drizzle',
-
-            61,63,65 => '🌧️ Rain',
-
-            71,73,75 => '❄️ Snow',
-
-            default => '☁️ Cloudy',
-
-        };
-
-        return view(
-            'country.show',
-            compact('country', 'weather', 'condition', 'news')
-        );
-        
+        return view('country.show', compact(
+            'country',
+            'weather',
+            'rate',
+            'news',
+            'riskDetails',
+            'indicators',
+            'population',
+            'gdp',
+            'historyMonths',
+            'historyScores'
+        ));
     }
-
-    public function create()
-    {
-        return view('country.create');
-    }
-
-    public function store(Request $request)
-    {
-        $request->validate([
-            'flag' => 'required',
-            'name' => 'required',
-            'risk' => 'required',
-            'weather' => 'required',
-            'currency' => 'required',
-            'latitude' => 'required',
-            'longitude' => 'required',
-            // Add other fields as necessary
-        ]);
-
-        Country::create($request->all());
-
-        return redirect()->route('countries.index')->with('success', 'Country created successfully.');
-    }
-
-    public function edit(Country $country)
-    {
-        return view('country.edit', compact('country'));
-    }
-
-    public function update(Request $request, Country $country)
-    {
-
-        $country->update($request->all());
-
-        return redirect()->route('countries.index')->with('success', 'Country updated successfully.');
-    }
-
-    public function destroy(Country $country)
-    {
-        $country->delete();
-
-        return redirect()->route('countries.index')->with('success', 'Country deleted successfully.');
-    }
-
 }

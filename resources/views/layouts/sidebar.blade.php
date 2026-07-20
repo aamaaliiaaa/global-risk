@@ -20,8 +20,8 @@
 
         <li>
 
-            <a href="{{ route('dashboard.index') }}"
-                class="{{ request()->routeIs('dashboard.index') ? 'active' : '' }}">
+            <a href="{{ route('dashboard') }}"
+                class="{{ request()->routeIs('dashboard') ? 'active' : '' }}">
 
                 <i class="bi bi-grid-fill"></i>
 
