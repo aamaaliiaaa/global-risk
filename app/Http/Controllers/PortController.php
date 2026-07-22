@@ -75,12 +75,19 @@ class PortController extends Controller
 
         $totalPorts = Port::count();
 
+        $stats = [
+            'total' => $totalPorts,
+            'congested' => Port::whereIn('status', ['Delay', 'Congested'])->count(),
+            'busy' => Port::where('status', 'Busy')->count(),
+            'normal' => Port::where('status', 'Normal')->count(),
+        ];
+
         // Countries that actually have ports, for the dropdown
         $countries = Country::whereHas('ports')
             ->orderBy('name')
             ->get(['id', 'name', 'flag']);
 
-        return view('ports.index', compact('ports', 'mapPorts', 'totalPorts', 'countries'));
+        return view('ports.index', compact('ports', 'mapPorts', 'totalPorts', 'countries', 'stats'));
     }
 
     public function show(Port $port)

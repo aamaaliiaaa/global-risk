@@ -26,49 +26,142 @@ class RiskIntelligenceService
         'singapore' => 'SGP',
         'china' => 'CHN',
         'united states' => 'USA',
+        'united states of america' => 'USA',
         'usa' => 'USA',
-        'australia' => 'AUS'
+        'australia' => 'AUS',
+        'japan' => 'JPN',
+        'germany' => 'DEU',
+        'united kingdom' => 'GBR',
+        'uk' => 'GBR',
+        'malaysia' => 'MYS',
+        'india' => 'IND',
+        'france' => 'FRA',
+        'brazil' => 'BRA',
+        'vietnam' => 'VNM',
+        'thailand' => 'THA',
+        'philippines' => 'PHL',
+        'south korea' => 'KOR',
+        'canada' => 'CAN',
+        'russia' => 'RUS',
+        'netherlands' => 'NLD',
+        'saudi arabia' => 'SAU',
+        'south africa' => 'ZAF',
+        'switzerland' => 'CHE',
+        'turkey' => 'TUR',
+        'türkiye' => 'TUR',
+        'united arab emirates' => 'ARE',
+        'uae' => 'ARE',
+        'argentina' => 'ARG',
+        'egypt' => 'EGY',
+        'italy' => 'ITA',
+        'spain' => 'ESP',
+        'mexico' => 'MEX',
     ];
 
     /**
      * Fetch weather data with database caching.
+     */
+    /**
+     * Unified WMO Weather Code Parser
+     */
+    public function parseWmoCode(int $code): array
+    {
+        return match (true) {
+            $code === 0 => [
+                'condition' => 'Clear / Sunny',
+                'icon' => '☀️',
+                'risk' => 'Low Risk',
+                'badge_class' => 'bg-success-subtle text-success border border-success-subtle'
+            ],
+            in_array($code, [1, 2, 3]) => [
+                'condition' => 'Partly Cloudy',
+                'icon' => '🌤️',
+                'risk' => 'Low Risk',
+                'badge_class' => 'bg-info-subtle text-info border border-info-subtle'
+            ],
+            in_array($code, [45, 48]) => [
+                'condition' => 'Fog / Haze',
+                'icon' => '🌫️',
+                'risk' => 'Moderate Risk',
+                'badge_class' => 'bg-warning-subtle text-warning border border-warning-subtle'
+            ],
+            in_array($code, [51, 53, 55, 56, 57]) => [
+                'condition' => 'Drizzle',
+                'icon' => '🌦️',
+                'risk' => 'Moderate Risk',
+                'badge_class' => 'bg-warning-subtle text-warning border border-warning-subtle'
+            ],
+            in_array($code, [61, 63, 65, 66, 67, 80, 81, 82]) => [
+                'condition' => 'Rain / Showers',
+                'icon' => '🌧️',
+                'risk' => 'Moderate Risk',
+                'badge_class' => 'bg-primary-subtle text-primary border border-primary-subtle'
+            ],
+            in_array($code, [71, 73, 75, 77, 85, 86]) => [
+                'condition' => 'Snow',
+                'icon' => '❄️',
+                'risk' => 'High Risk',
+                'badge_class' => 'bg-danger-subtle text-danger border border-danger-subtle'
+            ],
+            in_array($code, [95, 96, 99]) => [
+                'condition' => 'Thunderstorm',
+                'icon' => '⛈️',
+                'risk' => 'Severe Risk',
+                'badge_class' => 'bg-danger text-white'
+            ],
+            default => [
+                'condition' => 'Cloudy',
+                'icon' => '☁️',
+                'risk' => 'Low Risk',
+                'badge_class' => 'bg-secondary-subtle text-secondary'
+            ]
+        };
+    }
+
+    /**
+     * Fetch weather data for a single model (Country or Port) with DB caching.
      */
     public function getWeather($model)
     {
         $type = get_class($model);
         $id = $model->id;
 
-        // Check cache
         $cache = WeatherCache::where('weatherable_type', $type)
             ->where('weatherable_id', $id)
             ->first();
 
-        if ($cache && $cache->expires_at->isFuture()) {
+        if ($cache && $cache->expires_at && $cache->expires_at->isFuture()) {
+            $wmoInfo = $this->parseWmoCode($cache->weather_code);
             return [
                 'temperature' => $cache->temperature,
                 'wind_speed' => $cache->wind_speed,
                 'weather_code' => $cache->weather_code,
-                'condition' => $cache->condition,
+                'humidity' => 60,
+                'condition' => $wmoInfo['condition'],
+                'icon' => $wmoInfo['icon'],
+                'risk' => $wmoInfo['risk'],
+                'badge_class' => $wmoInfo['badge_class']
             ];
         }
 
-        // Fetch from Open-Meteo
         try {
             $lat = $model->latitude;
             $lng = $model->longitude;
 
-            $response = Http::timeout(5)->get('https://api.open-meteo.com/v1/forecast', [
+            $response = Http::timeout(5)->get('http://api.open-meteo.com/v1/forecast', [
                 'latitude' => $lat,
                 'longitude' => $lng,
-                'current' => 'temperature_2m,wind_speed_10m,weather_code'
+                'current_weather' => 'true'
             ]);
 
             if ($response->successful()) {
                 $data = $response->json();
-                $temp = $data['current']['temperature_2m'] ?? 25;
-                $wind = $data['current']['wind_speed_10m'] ?? 10;
-                $code = $data['current']['weather_code'] ?? 0;
-                $condition = $this->parseWeatherCode($code);
+                $cw = $data['current_weather'] ?? [];
+                $temp = $cw['temperature'] ?? 25;
+                $wind = $cw['windspeed'] ?? 10;
+                $code = $cw['weathercode'] ?? 0;
+
+                $wmoInfo = $this->parseWmoCode($code);
 
                 WeatherCache::updateOrCreate(
                     [
@@ -79,8 +172,8 @@ class RiskIntelligenceService
                         'temperature' => $temp,
                         'wind_speed' => $wind,
                         'weather_code' => $code,
-                        'condition' => $condition,
-                        'expires_at' => Carbon::now()->addHours(6)
+                        'condition' => $wmoInfo['condition'],
+                        'expires_at' => Carbon::now()->addMinutes(15)
                     ]
                 );
 
@@ -88,37 +181,120 @@ class RiskIntelligenceService
                     'temperature' => $temp,
                     'wind_speed' => $wind,
                     'weather_code' => $code,
-                    'condition' => $condition
+                    'humidity' => 60,
+                    'condition' => $wmoInfo['condition'],
+                    'icon' => $wmoInfo['icon'],
+                    'risk' => $wmoInfo['risk'],
+                    'badge_class' => $wmoInfo['badge_class']
                 ];
             }
         } catch (\Exception $e) {
             Log::error("Error fetching weather for {$type} ID {$id}: " . $e->getMessage());
         }
 
-        // Fallback to cache if exists (even if expired)
         if ($cache) {
+            $wmoInfo = $this->parseWmoCode($cache->weather_code);
             return [
                 'temperature' => $cache->temperature,
                 'wind_speed' => $cache->wind_speed,
                 'weather_code' => $cache->weather_code,
-                'condition' => $cache->condition,
+                'humidity' => 60,
+                'condition' => $wmoInfo['condition'],
+                'icon' => $wmoInfo['icon'],
+                'risk' => $wmoInfo['risk'],
+                'badge_class' => $wmoInfo['badge_class']
             ];
         }
 
-        // Hardcoded defaults based on model
-        $defaultCond = '☀️ Clear';
-        if (str_contains(strtolower($model->weather ?? ''), 'rain')) {
-            $defaultCond = '🌧️ Rain';
-        } elseif (str_contains(strtolower($model->weather ?? ''), 'cloud')) {
-            $defaultCond = '☁️ Cloudy';
-        }
-
+        $wmoInfo = $this->parseWmoCode(0);
         return [
             'temperature' => 24.5,
             'wind_speed' => 12.0,
             'weather_code' => 0,
-            'condition' => $defaultCond
+            'humidity' => 60,
+            'condition' => $wmoInfo['condition'],
+            'icon' => $wmoInfo['icon'],
+            'risk' => $wmoInfo['risk'],
+            'badge_class' => $wmoInfo['badge_class']
         ];
+    }
+
+    /**
+     * Bulk fetch weather for all countries, updating WeatherCache table in MySQL.
+     */
+    public function getBulkWeatherData($allCountries, $forceRefresh = false)
+    {
+        $cacheKey = 'bulk_weather_map_data_v5';
+        if ($forceRefresh) {
+            \Illuminate\Support\Facades\Cache::forget($cacheKey);
+        }
+
+        return \Illuminate\Support\Facades\Cache::remember($cacheKey, now()->addMinutes(15), function () use ($allCountries) {
+            $result = [];
+            $chunks = $allCountries->chunk(50);
+
+            foreach ($chunks as $chunk) {
+                $lats = $chunk->pluck('latitude')->implode(',');
+                $lngs = $chunk->pluck('longitude')->implode(',');
+                $url = "http://api.open-meteo.com/v1/forecast?latitude={$lats}&longitude={$lngs}&current_weather=true";
+
+                try {
+                    $response = Http::timeout(6)->get($url);
+                    if ($response->successful()) {
+                        $data = $response->json();
+                        if (isset($data['current_weather'])) {
+                            $data = [$data];
+                        }
+
+                        if (is_array($data)) {
+                            foreach ($data as $index => $res) {
+                                if (isset($res['current_weather'])) {
+                                    $cw = $res['current_weather'];
+                                    $countryItem = $chunk->values()->get($index);
+
+                                    if ($countryItem) {
+                                        $temp = $cw['temperature'] ?? 24.5;
+                                        $wind = $cw['windspeed'] ?? 10.0;
+                                        $code = $cw['weathercode'] ?? 0;
+                                        $wmoInfo = $this->parseWmoCode($code);
+
+                                        // Store in DB WeatherCache so country detail uses exact same data
+                                        WeatherCache::updateOrCreate(
+                                            [
+                                                'weatherable_type' => get_class($countryItem),
+                                                'weatherable_id' => $countryItem->id
+                                            ],
+                                            [
+                                                'temperature' => $temp,
+                                                'wind_speed' => $wind,
+                                                'weather_code' => $code,
+                                                'condition' => $wmoInfo['condition'],
+                                                'expires_at' => Carbon::now()->addMinutes(15)
+                                            ]
+                                        );
+
+                                        $result[$countryItem->id] = [
+                                            'temp' => $temp,
+                                            'wind' => $wind,
+                                            'humidity' => 60,
+                                            'code' => $code,
+                                            'condition' => $wmoInfo['condition'],
+                                            'icon' => $wmoInfo['icon'],
+                                            'risk' => $wmoInfo['risk'],
+                                            'badge_class' => $wmoInfo['badge_class']
+                                        ];
+                                    }
+                                }
+                            }
+                        }
+                    }
+                } catch (\Exception $e) {
+                    Log::error("Bulk weather fetch error: " . $e->getMessage());
+                }
+            }
+
+            return $result;
+        });
     }
 
     /**
@@ -146,7 +322,7 @@ class RiskIntelligenceService
                         ['currency_code' => $code],
                         [
                             'rate' => $rate,
-                            'expires_at' => Carbon::now()->addHours(12)
+                            'expires_at' => Carbon::now()->addMinutes(10)
                         ]
                     );
                 }
@@ -173,24 +349,86 @@ class RiskIntelligenceService
     }
 
     /**
-     * Fetch news for a country with caching and sentiment analysis.
+     * Fetch real-time live news for a country using Google News RSS and GNews fallback.
      */
-    public function getNews(Country $country)
+    public function getNews(Country $country, bool $forceRefresh = false)
     {
         // Check cache
         $cachedNews = NewsCache::where('country_id', $country->id)->get();
-        $fresh = $cachedNews->isNotEmpty() && $cachedNews->first()->expires_at->isFuture();
+        $fresh = !$forceRefresh && $cachedNews->isNotEmpty() && $cachedNews->first()->expires_at->isFuture();
 
         if ($fresh) {
             return $cachedNews->toArray();
         }
 
-        // Fetch from GNews API
+        // 1. Primary Engine: Google News RSS (Real-time, authentic publisher links, 100% free)
+        try {
+            $query = urlencode('"' . $country->name . '" AND (shipping OR logistics OR trade OR economy OR port OR business)');
+            $rssUrl = "https://news.google.com/rss/search?q={$query}&hl=en-US&gl=US&ceid=US:en";
+
+            $response = Http::timeout(6)->get($rssUrl);
+            if ($response->successful()) {
+                $xml = @simplexml_load_string($response->body());
+                if ($xml && isset($xml->channel->item) && count($xml->channel->item) > 0) {
+                    NewsCache::where('country_id', $country->id)->delete();
+                    $cachedNews = [];
+                    $count = 0;
+
+                    foreach ($xml->channel->item as $item) {
+                        if ($count >= 6) break;
+
+                        $rawTitle = (string)$item->title;
+                        $link = (string)$item->link;
+                        $pubDateStr = (string)$item->pubDate;
+                        $pubDate = $pubDateStr ? Carbon::parse($pubDateStr) : Carbon::now();
+
+                        $source = 'Google News';
+                        if (isset($item->source) && (string)$item->source !== '') {
+                            $source = (string)$item->source;
+                        } elseif (str_contains($rawTitle, ' - ')) {
+                            $parts = explode(' - ', $rawTitle);
+                            $source = array_pop($parts);
+                            $rawTitle = implode(' - ', $parts);
+                        }
+
+                        $description = strip_tags((string)$item->description);
+                        $description = \Illuminate\Support\Str::limit($description, 250);
+
+                        $analysisText = $rawTitle . ' ' . $description;
+                        $sentiment = $this->sentimentService->analyze($analysisText);
+
+                        $newRecord = NewsCache::create([
+                            'country_id' => $country->id,
+                            'title' => \Illuminate\Support\Str::limit($rawTitle, 250),
+                            'source' => $source,
+                            'description' => $description ?: $rawTitle,
+                            'content' => $description ?: $rawTitle,
+                            'url' => $link,
+                            'published_at' => $pubDate,
+                            'sentiment' => $sentiment['sentiment'],
+                            'positive_count' => $sentiment['positive_count'],
+                            'negative_count' => $sentiment['negative_count'],
+                            'expires_at' => Carbon::now()->addHours(3)
+                        ]);
+
+                        $cachedNews[] = $newRecord->toArray();
+                        $count++;
+                    }
+
+                    if (!empty($cachedNews)) {
+                        return $cachedNews;
+                    }
+                }
+            }
+        } catch (\Exception $e) {
+            Log::error("Error fetching Google News RSS for country {$country->name}: " . $e->getMessage());
+        }
+
+        // 2. Secondary Engine: GNews API
         $apiKey = env('GNEWS_API_KEY') ?: '43ad4068a0ffd6d0115e341fe80a8432';
-        
         try {
             $response = Http::timeout(5)->get('https://gnews.io/api/v4/search', [
-                'q' => $country->name . ' AND (shipping OR logistics OR trade OR economy OR port)',
+                'q' => $country->name . ' AND (shipping OR logistics OR trade OR economy)',
                 'lang' => 'en',
                 'max' => 5,
                 'apikey' => $apiKey
@@ -200,49 +438,30 @@ class RiskIntelligenceService
                 $data = $response->json();
                 $articles = $data['articles'] ?? [];
 
-                if (empty($articles)) {
-                    // Fallback to simpler query
-                    $response = Http::timeout(5)->get('https://gnews.io/api/v4/search', [
-                        'q' => $country->name,
-                        'lang' => 'en',
-                        'max' => 5,
-                        'apikey' => $apiKey
-                    ]);
-                    if ($response->successful()) {
-                        $data = $response->json();
-                        $articles = $data['articles'] ?? [];
-                    }
-                }
-
                 if (!empty($articles)) {
-                    // Delete old news cache for this country
                     NewsCache::where('country_id', $country->id)->delete();
-
                     $cachedNews = [];
                     foreach ($articles as $art) {
                         $title = $art['title'] ?? 'No Title';
                         $desc = $art['description'] ?? '';
-                        $content = $art['content'] ?? '';
                         $source = $art['source']['name'] ?? 'GNews';
                         $url = $art['url'] ?? '#';
                         $pubDate = isset($art['publishedAt']) ? Carbon::parse($art['publishedAt']) : Carbon::now();
 
-                        // Perform Sentiment Analysis on Title + Description
-                        $analysisText = $title . ' ' . $desc;
-                        $sentiment = $this->sentimentService->analyze($analysisText);
+                        $analysis = $this->sentimentService->analyze($title . ' ' . $desc);
 
                         $newRecord = NewsCache::create([
                             'country_id' => $country->id,
                             'title' => substr($title, 0, 255),
                             'source' => $source,
                             'description' => $desc,
-                            'content' => $content,
+                            'content' => $desc,
                             'url' => $url,
                             'published_at' => $pubDate,
-                            'sentiment' => $sentiment['sentiment'],
-                            'positive_count' => $sentiment['positive_count'],
-                            'negative_count' => $sentiment['negative_count'],
-                            'expires_at' => Carbon::now()->addHours(24)
+                            'sentiment' => $analysis['sentiment'],
+                            'positive_count' => $analysis['positive_count'],
+                            'negative_count' => $analysis['negative_count'],
+                            'expires_at' => Carbon::now()->addHours(6)
                         ]);
 
                         $cachedNews[] = $newRecord->toArray();
@@ -252,57 +471,15 @@ class RiskIntelligenceService
                 }
             }
         } catch (\Exception $e) {
-            Log::error("Error fetching news for country {$country->name}: " . $e->getMessage());
+            Log::error("Error fetching GNews API for country {$country->name}: " . $e->getMessage());
         }
 
-        // Return expired cache if available
+        // Return cached news if exists
         if ($cachedNews->isNotEmpty()) {
             return $cachedNews->toArray();
         }
 
-        // Mock news fallback if API fails and cache is empty
-        $mockArticles = [
-            [
-                'title' => "Supply chain adjustments in {$country->name} show positive progress",
-                'description' => "Recent logistics indicators suggest strong domestic growth and improvement in export activities.",
-                'source' => "Global Trade News",
-                'sentiment' => "Positive"
-            ],
-            [
-                'title' => "Concerns arise over transport congestion and potential delay",
-                'description' => "Local industrial reports highlight issues of port congestion and increasing inflation risks.",
-                'source' => "Supply Chain Journal",
-                'sentiment' => "Negative"
-            ],
-            [
-                'title' => "Market updates and currency stability in {$country->name}",
-                'description' => "Central bank maintains stable policies despite minor fluctuations in the global currency rates.",
-                'source' => "Financial Times",
-                'sentiment' => "Neutral"
-            ]
-        ];
-
-        NewsCache::where('country_id', $country->id)->delete();
-        $cachedNews = [];
-        foreach ($mockArticles as $mock) {
-            $analysis = $this->sentimentService->analyze($mock['title'] . ' ' . $mock['description']);
-            $newRecord = NewsCache::create([
-                'country_id' => $country->id,
-                'title' => $mock['title'],
-                'source' => $mock['source'],
-                'description' => $mock['description'],
-                'content' => $mock['description'],
-                'url' => '#',
-                'published_at' => Carbon::now(),
-                'sentiment' => $analysis['sentiment'],
-                'positive_count' => $analysis['positive_count'],
-                'negative_count' => $analysis['negative_count'],
-                'expires_at' => Carbon::now()->addHours(2) // Short expire for mock news
-            ]);
-            $cachedNews[] = $newRecord->toArray();
-        }
-
-        return $cachedNews;
+        return [];
     }
 
     /**
@@ -316,13 +493,16 @@ class RiskIntelligenceService
             $code = strtoupper(substr($country->name, 0, 3));
         }
 
-        // Check if we have indicators for the past few years in database
+        // Check if we already have genuine World Bank data (>100M pop for large countries or realistic GDP)
         $indicators = CountryIndicator::where('country_id', $country->id)
             ->orderBy('year', 'asc')
             ->get();
 
-        // If we have indicators in DB and they were updated recently, use them
-        if ($indicators->isNotEmpty()) {
+        // If indicators exist and have real World Bank scale (> 100M pop for Indonesia, etc.), use them
+        $firstInd = $indicators->first();
+        $isMock = $firstInd && ($country->name === 'Indonesia' && ($firstInd->population ?? 0) < 100000000);
+
+        if ($indicators->isNotEmpty() && !$isMock) {
             return $indicators->toArray();
         }
 

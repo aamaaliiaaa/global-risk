@@ -15,7 +15,6 @@ class WatchlistController extends Controller
     public function __construct(RiskScoringService $scoringService)
     {
         $this->scoringService = $scoringService;
-        $this->middleware('auth');
     }
 
     public function index()

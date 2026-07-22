@@ -119,17 +119,24 @@
 
         </li>
 
+        @if(Auth::check() && Auth::user()->is_admin)
         <li>
-
             <a href="{{ route('admin.index') }}"
                 class="{{ request()->routeIs('admin.*') ? 'active' : '' }}">
-
-                <i class="bi bi-person-fill-gear"></i>
-
-                Admin
-
+                <i class="bi bi-shield-lock-fill"></i>
+                Admin Panel
             </a>
+        </li>
+        @endif
 
+        <li class="mt-3 pt-3 border-top">
+            <form method="POST" action="{{ route('logout') }}" id="sidebar-logout-form" class="d-none">
+                @csrf
+            </form>
+            <a href="#" onclick="event.preventDefault(); document.getElementById('sidebar-logout-form').submit();" class="text-danger fw-semibold">
+                <i class="bi bi-box-arrow-right text-danger"></i>
+                Log Out
+            </a>
         </li>
 
     </ul>

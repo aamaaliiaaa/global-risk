@@ -32,9 +32,12 @@
             <div class="detail-item">
                 <strong>Weather Condition</strong>
                 <span>
-                    {{ $weather['condition'] }}<br>
-                    🌡️ {{ $weather['temperature'] }}°C<br>
-                    💨 {{ $weather['wind_speed'] }} km/h
+                    <span class="badge {{ $weather['badge_class'] ?? 'bg-light text-dark' }} px-2 py-1 mb-1">
+                        {{ $weather['icon'] ?? '☀️' }} {{ $weather['condition'] }}
+                    </span><br>
+                    🌡️ Temperature: <strong>{{ $weather['temperature'] }}°C</strong><br>
+                    💨 Wind Speed: <strong>{{ $weather['wind_speed'] }} km/h</strong><br>
+                    💧 Humidity: <strong>{{ $weather['humidity'] ?? 60 }}%</strong>
                 </span>
             </div>
             <div class="detail-item">
@@ -154,7 +157,17 @@
     <div class="col-md-7">
         <div class="detail-card h-100">
             <h4><i class="bi bi-geo-alt-fill text-primary"></i> Geographic Location</h4>
-            <div id="countryMap" style="height: 380px; border-radius: 12px;"></div>
+            <div id="countryMap" class="mt-3" style="height: 380px; border-radius: 12px; overflow: hidden; background-color: #f8fafc;">
+                <iframe 
+                    width="100%" 
+                    height="380" 
+                    style="border:0; border-radius: 12px; width:100%; height:380px;" 
+                    loading="lazy" 
+                    allowfullscreen
+                    referrerpolicy="no-referrer-when-downgrade"
+                    src="https://maps.google.com/maps?q={{ urlencode($country->name) }}&t=&z=5&ie=UTF8&iwloc=&output=embed">
+                </iframe>
+            </div>
         </div>
     </div>
 
@@ -166,15 +179,26 @@
                 @forelse($news as $article)
                 <div class="news-item pb-3 mb-3 border-bottom">
                     <div class="d-flex justify-content-between align-items-center mb-1">
-                        <span class="text-secondary small">{{ $article['source'] }}</span>
+                        <span class="text-secondary small fw-semibold">{{ $article['source'] }}</span>
                         <span class="risk {{ strtolower($article['sentiment']) }}">{{ $article['sentiment'] }}</span>
                     </div>
-                    <h6 class="mb-1"><a href="{{ $article['url'] }}" target="_blank" class="text-dark text-decoration-none fw-semibold">{{ $article['title'] }}</a></h6>
-                    <p class="text-muted small mb-1">{{ Str::limit($article['description'], 120) }}</p>
-                    <small class="text-black-50"><i class="bi bi-calendar3"></i> {{ \Carbon\Carbon::parse($article['published_at'])->format('d M Y') }}</small>
+                    <h6 class="mb-1">
+                        <a href="{{ $article['url'] }}" target="_blank" rel="noopener noreferrer" class="text-dark text-decoration-none fw-semibold">
+                            {{ $article['title'] }}
+                        </a>
+                    </h6>
+                    <p class="text-muted small mb-2">{{ Str::limit($article['description'], 120) }}</p>
+                    <div class="d-flex justify-content-between align-items-center">
+                        <small class="text-black-50"><i class="bi bi-calendar3"></i> {{ \Carbon\Carbon::parse($article['published_at'])->format('d M Y') }}</small>
+                        @if(isset($article['url']) && $article['url'] !== '#')
+                        <a href="{{ $article['url'] }}" target="_blank" rel="noopener noreferrer" class="btn btn-xs btn-outline-primary rounded-pill py-0 px-2" style="font-size: 11px;">
+                            Read Original <i class="bi bi-box-arrow-up-right ms-1"></i>
+                        </a>
+                        @endif
+                    </div>
                 </div>
                 @empty
-                <p>No logistical news available for this country.</p>
+                <p class="text-muted small py-3">No logistical news available for this country.</p>
                 @endforelse
             </div>
         </div>
@@ -218,21 +242,6 @@ document.addEventListener("DOMContentLoaded", function () {
             }
         }
     });
-
-    // Country Leaflet Map
-    const lat = {{ $country->latitude }};
-    const lng = {{ $country->longitude }};
-
-    const map = L.map('countryMap').setView([lat, lng], 4);
-
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-        attribution: '&copy; OpenStreetMap contributors'
-    }).addTo(map);
-
-    L.marker([lat, lng])
-        .addTo(map)
-        .bindPopup('<strong>{{ $country->name }}</strong>')
-        .openPopup();
 });
 </script>
 

@@ -17,17 +17,43 @@ class NewsController extends Controller
         $this->intelligenceService = $intelligenceService;
     }
 
-    public function index()
+    public function index(Request $request)
     {
-        $countries = Country::all();
-        
-        // Trigger fetching news for all countries to populate cache
-        foreach ($countries as $c) {
-            $this->intelligenceService->getNews($c);
+        $refresh = $request->has('refresh');
+
+        // Populate live news for major countries if empty or refresh requested
+        if ($refresh || NewsCache::count() === 0) {
+            $majorCountries = Country::whereIn('name', [
+                'Indonesia', 'United States', 'China', 'Singapore', 'Australia', 
+                'Japan', 'Germany', 'United Kingdom', 'Malaysia', 'Vietnam', 'Thailand', 'India'
+            ])->get();
+
+            if ($majorCountries->isEmpty()) {
+                $majorCountries = Country::take(10)->get();
+            }
+
+            foreach ($majorCountries as $c) {
+                $this->intelligenceService->getNews($c, $refresh);
+            }
         }
 
-        // Fetch news from DB
-        $newsList = NewsCache::with('country')->orderBy('published_at', 'desc')->get();
+        $query = NewsCache::with('country')->orderBy('published_at', 'desc');
+
+        if ($request->search) {
+            $query->where(function($q) use ($request) {
+                $q->where('title', 'like', '%' . $request->search . '%')
+                  ->orWhereHas('country', function($cq) use ($request) {
+                      $cq->where('name', 'like', '%' . $request->search . '%');
+                  });
+            });
+        }
+
+        if ($request->sentiment) {
+            $query->where('sentiment', $request->sentiment);
+        }
+
+        // Fetch paginated news from DB
+        $newsList = $query->paginate(15)->withQueryString();
 
         // Aggregate statistics
         $stats = NewsCache::select('sentiment', DB::raw('count(*) as total'))
@@ -43,3 +69,4 @@ class NewsController extends Controller
         return view('news.index', compact('newsList', 'positive', 'neutral', 'negative', 'total'));
     }
 }
+

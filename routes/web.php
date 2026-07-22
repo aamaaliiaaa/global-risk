@@ -44,14 +44,17 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::post('/watchlist', [WatchlistController::class, 'store'])->name('watchlist.store');
     Route::delete('/watchlist/{id}', [WatchlistController::class, 'destroy'])->name('watchlist.destroy');
 
-    // Admin
-    Route::get('/admin', [AdminController::class, 'index'])->name('admin.index');
-    Route::post('/admin/ports', [AdminController::class, 'storePort'])->name('admin.ports.store');
-    Route::delete('/admin/ports/{port}', [AdminController::class, 'destroyPort'])->name('admin.ports.destroy');
-    Route::post('/admin/words', [AdminController::class, 'storeWord'])->name('admin.words.store');
-    Route::delete('/admin/words/{type}/{id}', [AdminController::class, 'destroyWord'])->name('admin.words.destroy');
-    Route::post('/admin/articles', [AdminController::class, 'storeArticle'])->name('admin.articles.store');
-    Route::delete('/admin/articles/{article}', [AdminController::class, 'destroyArticle'])->name('admin.articles.destroy');
+    // Admin (Restricted to is_admin Users)
+    Route::middleware(['admin'])->group(function () {
+        Route::get('/admin', [AdminController::class, 'index'])->name('admin.index');
+        Route::get('/admin/dashboard', [AdminController::class, 'index']);
+        Route::post('/admin/ports', [AdminController::class, 'storePort'])->name('admin.ports.store');
+        Route::delete('/admin/ports/{port}', [AdminController::class, 'destroyPort'])->name('admin.ports.destroy');
+        Route::post('/admin/words', [AdminController::class, 'storeWord'])->name('admin.words.store');
+        Route::delete('/admin/words/{type}/{id}', [AdminController::class, 'destroyWord'])->name('admin.words.destroy');
+        Route::post('/admin/articles', [AdminController::class, 'storeArticle'])->name('admin.articles.store');
+        Route::delete('/admin/articles/{article}', [AdminController::class, 'destroyArticle'])->name('admin.articles.destroy');
+    });
 });
 
 Route::middleware('auth')->group(function () {

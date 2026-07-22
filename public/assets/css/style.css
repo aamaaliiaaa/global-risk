@@ -740,12 +740,9 @@ body{
     font-size:16px;
 }
 
-#riskChart{
-
-    width:100% !important;
-
-    height:250px !important;
-
+#riskChart {
+    width: 100% !important;
+    height: 100% !important;
 }
 
 #countryMap{

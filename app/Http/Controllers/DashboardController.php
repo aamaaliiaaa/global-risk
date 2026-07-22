@@ -25,6 +25,7 @@ class DashboardController extends Controller
         $heatmapData = $countries->map(function ($c) {
             $score = $c->risk_score ?? 25;
             return [
+                'id'         => $c->id,
                 'name'       => $c->name,
                 'flag'       => $c->flag,
                 'latitude'   => $c->latitude,

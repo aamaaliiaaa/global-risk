@@ -13,6 +13,54 @@
     </div>
 </div>
 
+<!-- Summary Cards -->
+<div class="row g-4 mb-4">
+    <!-- Total Ports -->
+    <div class="col-md-3">
+        <div class="dashboard-card h-100 d-flex flex-column justify-content-center" style="border-top: 4px solid #2563eb;">
+            <div class="d-flex justify-content-between align-items-start">
+                <div class="text-muted fw-semibold">Total<br>Ports</div>
+                <div class="stat-icon bg-primary text-white"><i class="bi bi-geo-alt-fill"></i></div>
+            </div>
+            <h2 class="mt-3 mb-1 fw-bold">{{ number_format($stats['total']) }}</h2>
+            <small class="text-success"><i class="bi bi-arrow-up-short"></i> Seeded</small>
+        </div>
+    </div>
+    <!-- Critical/Congested Ports -->
+    <div class="col-md-3">
+        <div class="dashboard-card h-100 d-flex flex-column justify-content-center" style="border-top: 4px solid #ef4444;">
+            <div class="d-flex justify-content-between align-items-start">
+                <div class="text-muted fw-semibold">Delay /<br>Congested</div>
+                <div class="stat-icon bg-danger text-white"><i class="bi bi-exclamation-octagon"></i></div>
+            </div>
+            <h2 class="mt-3 mb-1 fw-bold">{{ number_format($stats['congested']) }}</h2>
+            <small class="text-danger">Critical State</small>
+        </div>
+    </div>
+    <!-- Busy Ports -->
+    <div class="col-md-3">
+        <div class="dashboard-card h-100 d-flex flex-column justify-content-center" style="border-top: 4px solid #f59e0b;">
+            <div class="d-flex justify-content-between align-items-start">
+                <div class="text-muted fw-semibold">Busy<br>Status</div>
+                <div class="stat-icon bg-warning text-white"><i class="bi bi-cone-striped"></i></div>
+            </div>
+            <h2 class="mt-3 mb-1 fw-bold">{{ number_format($stats['busy']) }}</h2>
+            <small class="text-warning">High Traffic</small>
+        </div>
+    </div>
+    <!-- Normal Ports -->
+    <div class="col-md-3">
+        <div class="dashboard-card h-100 d-flex flex-column justify-content-center" style="border-top: 4px solid #22c55e;">
+            <div class="d-flex justify-content-between align-items-start">
+                <div class="text-muted fw-semibold">Normal<br>Status</div>
+                <div class="stat-icon bg-success text-white"><i class="bi bi-check2-circle"></i></div>
+            </div>
+            <h2 class="mt-3 mb-1 fw-bold">{{ number_format($stats['normal']) }}</h2>
+            <small class="text-success">Operational</small>
+        </div>
+    </div>
+</div>
+
 <div class="country-toolbar mb-4">
     <form method="GET" action="{{ route('ports.index') }}" class="d-flex flex-wrap gap-3 align-items-center w-100" id="port-filter-form">
         <!-- Search input -->
@@ -194,9 +242,13 @@
 document.addEventListener("DOMContentLoaded", function () {
     const map = L.map('portsMap').setView([15, 20], 2);
 
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-        attribution: '© OpenStreetMap contributors'
+    L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
+        attribution: '&copy; OpenStreetMap contributors &copy; CARTO',
+        subdomains: 'abcd',
+        maxZoom: 19
     }).addTo(map);
+
+    setTimeout(() => map.invalidateSize(), 200);
 
     // All map ports (full dataset, not paginated)
     const allPorts = @json($mapPorts);

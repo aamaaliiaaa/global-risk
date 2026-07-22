@@ -89,19 +89,27 @@
 @section('scripts')
 <script>
 document.addEventListener("DOMContentLoaded", function () {
-    const lat = {{ $port->latitude }};
-    const lng = {{ $port->longitude }};
+    const lat = {{ $port->latitude ?? 'null' }};
+    const lng = {{ $port->longitude ?? 'null' }};
 
-    const map = L.map('portMap').setView([lat, lng], 10);
+    if (lat !== null && lng !== null && (lat !== 0 || lng !== 0)) {
+        const map = L.map('portMap').setView([lat, lng], 10);
 
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-        attribution: '&copy; OpenStreetMap contributors'
-    }).addTo(map);
+        L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
+            attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>',
+            subdomains: 'abcd',
+            maxZoom: 19
+        }).addTo(map);
 
-    L.marker([lat, lng])
-        .addTo(map)
-        .bindPopup('<strong>🚢 Port: {{ $port->name }}</strong><br>Status: {{ $port->status }}')
-        .openPopup();
+        L.marker([lat, lng])
+            .addTo(map)
+            .bindPopup('<strong>🚢 Port: {{ addslashes($port->name) }}</strong><br>Status: {{ $port->status }}')
+            .openPopup();
+
+        setTimeout(() => map.invalidateSize(), 200);
+    } else {
+        document.getElementById('portMap').innerHTML = '<div class="d-flex align-items-center justify-content-center h-100 text-muted bg-light rounded-3" style="min-height:250px;">Coordinates not available for this port.</div>';
+    }
 });
 </script>
 @endsection
