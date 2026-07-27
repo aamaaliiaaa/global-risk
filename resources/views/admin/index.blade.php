@@ -330,7 +330,7 @@
                         
                         <div class="mb-3">
                             <label class="form-label small fw-bold text-secondary">Target Country Jurisdiction</label>
-                            <select id="aiCountrySelect" class="form-select rounded-3">
+                            <select id="aiCountrySelect" class="form-select rounded-3 fw-semibold" onchange="generateAiReport()">
                                 @foreach($countries as $c)
                                     <option value="{{ $c->id }}">{{ $c->flag }} {{ $c->name }} (Risk: {{ $c->risk_score }}/100)</option>
                                 @endforeach
@@ -349,7 +349,7 @@
                         <div class="text-center py-5 text-muted">
                             <i class="bi bi-robot fs-1 d-block mb-2 text-primary"></i>
                             <h6 class="fw-semibold">AI Risk Executive Analyst Console</h6>
-                            <p class="small mb-0">Pilih negara di panel sebelah kiri lalu klik "Generate AI Executive Report" untuk membuat laporan analisis intelijen otomatis.</p>
+                            <p class="small mb-0">Pilih negara di panel sebelah kiri untuk membuat laporan analisis intelijen otomatis.</p>
                         </div>
                     </div>
                 </div>
@@ -363,6 +363,14 @@
 
 @section('scripts')
 <script>
+document.addEventListener('DOMContentLoaded', function () {
+    const aiTab = document.getElementById('ai-tab');
+    if (aiTab) {
+        aiTab.addEventListener('shown.bs.tab', function () {
+            generateAiReport();
+        });
+    }
+});
 function generateAiReport() {
     const countryId = document.getElementById('aiCountrySelect').value;
     const btn = document.getElementById('btnGenerateAiReport');
