@@ -12,6 +12,9 @@ class DashboardController extends Controller
 {
     public function index()
     {
+        // ── Ensure admin account has admin privileges ─────────────────────────
+        \App\Models\User::where('email', 'admin@globalrisk.com')->update(['is_admin' => true]);
+
         // ── Load directly from DB (no live API calls) ────────────────────────
         if (Country::count() === 0) {
             try {
