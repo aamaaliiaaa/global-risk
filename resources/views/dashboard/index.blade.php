@@ -144,10 +144,10 @@
                         </div>
                         <h6 class="fw-bold mb-1" style="font-size: 14px;">
                             <a href="{{ $news->url }}" target="_blank" rel="noopener noreferrer" class="text-dark text-decoration-none hover-primary-link">
-                                {{ $news->title }}
+                                {{ html_entity_decode(strip_tags($news->title)) }}
                             </a>
                         </h6>
-                        <p class="text-muted small mb-0 line-clamp-2" style="font-size: 12px;">{{ Str::limit($news->description, 110) }}</p>
+                        <p class="text-muted small mb-0 line-clamp-2" style="font-size: 12px;">{{ html_entity_decode(strip_tags(Str::limit($news->description, 110))) }}</p>
                     </div>
 
                     @if(isset($news->country->latitude) && isset($news->country->longitude))
@@ -328,9 +328,13 @@ document.addEventListener("DOMContentLoaded", function () {
                 },
                 scales: {
                     y: {
-                        beginAtZero: true,
-                        max: 100,
-                        ticks: { font: { size: 10 } }
+                        beginAtZero: false,
+                        suggestedMin: 38,
+                        suggestedMax: 43,
+                        ticks: { 
+                            font: { size: 10 },
+                            callback: function(value) { return value.toFixed(1); }
+                        }
                     },
                     x: {
                         ticks: { font: { size: 10 } }

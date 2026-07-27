@@ -14,49 +14,49 @@
 </div>
 
 <!-- Summary Cards -->
-<div class="row g-4 mb-4">
+<div class="row g-3 mb-4">
     <!-- Total Ports -->
-    <div class="col-md-3">
-        <div class="dashboard-card h-100 d-flex flex-column justify-content-center" style="border-top: 4px solid #2563eb;">
-            <div class="d-flex justify-content-between align-items-start">
-                <div class="text-muted fw-semibold">Total<br>Ports</div>
+    <div class="col-6 col-md-3">
+        <div class="stat-card primary">
+            <div class="card-top">
+                <span class="card-title">Total Ports</span>
                 <div class="stat-icon bg-primary text-white"><i class="bi bi-geo-alt-fill"></i></div>
             </div>
-            <h2 class="mt-3 mb-1 fw-bold">{{ number_format($stats['total']) }}</h2>
-            <small class="text-success"><i class="bi bi-arrow-up-short"></i> Seeded</small>
+            <h2>{{ number_format($stats['total']) }}</h2>
+            <div class="card-subtitle text-success mt-2"><i class="bi bi-check-circle-fill me-1"></i> Seeded</div>
         </div>
     </div>
     <!-- Critical/Congested Ports -->
-    <div class="col-md-3">
-        <div class="dashboard-card h-100 d-flex flex-column justify-content-center" style="border-top: 4px solid #ef4444;">
-            <div class="d-flex justify-content-between align-items-start">
-                <div class="text-muted fw-semibold">Delay /<br>Congested</div>
+    <div class="col-6 col-md-3">
+        <div class="stat-card danger">
+            <div class="card-top">
+                <span class="card-title">Congested / Delay</span>
                 <div class="stat-icon bg-danger text-white"><i class="bi bi-exclamation-octagon"></i></div>
             </div>
-            <h2 class="mt-3 mb-1 fw-bold">{{ number_format($stats['congested']) }}</h2>
-            <small class="text-danger">Critical State</small>
+            <h2 class="text-danger">{{ number_format($stats['congested']) }}</h2>
+            <div class="card-subtitle text-danger mt-2"><i class="bi bi-exclamation-triangle-fill me-1"></i> Critical State</div>
         </div>
     </div>
     <!-- Busy Ports -->
-    <div class="col-md-3">
-        <div class="dashboard-card h-100 d-flex flex-column justify-content-center" style="border-top: 4px solid #f59e0b;">
-            <div class="d-flex justify-content-between align-items-start">
-                <div class="text-muted fw-semibold">Busy<br>Status</div>
+    <div class="col-6 col-md-3">
+        <div class="stat-card warning">
+            <div class="card-top">
+                <span class="card-title">Busy Ports</span>
                 <div class="stat-icon bg-warning text-white"><i class="bi bi-cone-striped"></i></div>
             </div>
-            <h2 class="mt-3 mb-1 fw-bold">{{ number_format($stats['busy']) }}</h2>
-            <small class="text-warning">High Traffic</small>
+            <h2 class="text-warning">{{ number_format($stats['busy']) }}</h2>
+            <div class="card-subtitle text-warning mt-2"><i class="bi bi-activity me-1"></i> High Traffic</div>
         </div>
     </div>
     <!-- Normal Ports -->
-    <div class="col-md-3">
-        <div class="dashboard-card h-100 d-flex flex-column justify-content-center" style="border-top: 4px solid #22c55e;">
-            <div class="d-flex justify-content-between align-items-start">
-                <div class="text-muted fw-semibold">Normal<br>Status</div>
+    <div class="col-6 col-md-3">
+        <div class="stat-card success">
+            <div class="card-top">
+                <span class="card-title">Normal Status</span>
                 <div class="stat-icon bg-success text-white"><i class="bi bi-check2-circle"></i></div>
             </div>
-            <h2 class="mt-3 mb-1 fw-bold">{{ number_format($stats['normal']) }}</h2>
-            <small class="text-success">Operational</small>
+            <h2 class="text-success">{{ number_format($stats['normal']) }}</h2>
+            <div class="card-subtitle text-success mt-2"><i class="bi bi-shield-check me-1"></i> Operational</div>
         </div>
     </div>
 </div>
@@ -139,9 +139,17 @@
                             title="Click to locate on map"
                         >
                             <td class="ps-3">
-                                <span class="me-1">🚢</span>
-                                <strong>{{ $port->name }}</strong>
-                                <div class="text-muted small">{{ $port->city }}</div>
+                                <div class="d-flex align-items-center gap-2">
+                                    <div class="rounded-circle bg-primary-subtle text-primary p-1 px-2">
+                                        <i class="bi bi-geo-alt-fill" style="font-size: 13px;"></i>
+                                    </div>
+                                    <div>
+                                        <strong class="text-dark d-block fw-bold" style="font-size: 13.5px;">{{ $port->name }}</strong>
+                                        @if($port->city && strtolower($port->city) !== strtolower($port->name))
+                                            <small class="text-muted" style="font-size: 11.5px;">{{ $port->city }}</small>
+                                        @endif
+                                    </div>
+                                </div>
                             </td>
                             <td>
                                 <span class="me-1">{{ $port->country->flag ?? '' }}</span>

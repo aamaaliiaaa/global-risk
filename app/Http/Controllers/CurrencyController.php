@@ -106,7 +106,7 @@ class CurrencyController extends Controller
             'last_updated' => now()->format('H:i T')
         ];
 
-        return view('currency.index', compact('rates', 'chartData', 'months', 'currencyNames', 'stats'));
+        return view('currency.index', compact('rates', 'chartData', 'months', 'currencyNames', 'stats', 'historicalRates'));
     }
 
     private function getHistoricalRates()

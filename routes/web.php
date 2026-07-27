@@ -10,6 +10,7 @@ use App\Http\Controllers\NewsController;
 use App\Http\Controllers\CompareController;
 use App\Http\Controllers\WatchlistController;
 use App\Http\Controllers\AdminController;
+use App\Http\Controllers\ShippingEstimatorController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', function () {
@@ -35,6 +36,9 @@ Route::middleware(['auth', 'verified'])->group(function () {
     // Ports
     Route::get('/ports', [PortController::class, 'index'])->name('ports.index');
     Route::get('/ports/{port}', [PortController::class, 'show'])->name('ports.show');
+
+    // Shipping Estimator
+    Route::get('/shipping-estimator', [ShippingEstimatorController::class, 'index'])->name('shipping.index');
 
     // Compare
     Route::get('/compare', [CompareController::class, 'index'])->name('compare.index');

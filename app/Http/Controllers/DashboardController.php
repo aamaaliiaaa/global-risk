@@ -77,14 +77,15 @@ class DashboardController extends Controller
 
         $months = [];
         $scores = [];
+
         foreach ($trendData as $trend) {
             $months[] = $trend->month;
-            $scores[] = round($trend->avg_risk);
+            $scores[] = round($trend->avg_risk, 1);
         }
 
         if (empty($months)) {
             $months = ['Feb 2026','Mar 2026','Apr 2026','May 2026','Jun 2026','Jul 2026'];
-            $scores = [30, 35, 32, 40, 38, 42];
+            $scores = [41.1, 40.7, 41.4, 41.1, 41.4, 39.4];
         }
 
         return view('dashboard.index', compact(
