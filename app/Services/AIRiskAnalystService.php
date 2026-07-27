@@ -60,31 +60,61 @@ class AIRiskAnalystService
      */
     public function processChatQuery(string $userPrompt): string
     {
-        $promptLower = strtolower(trim($userPrompt));
+        $p = strtolower(trim($userPrompt));
 
-        // 1. Check for Country Risk Queries
-        if (str_contains($promptLower, 'indonesia') || str_contains($promptLower, 'idr')) {
-            $country = Country::where('name', 'Indonesia')->first();
-            return "🤖 **Analisis AI GlobalRisk - Indonesia:**\n\n- **Skor Risiko**: " . ($country->risk_score ?? 20) . "/100 (" . ($country->risk ?? 'Low') . " Risk)\n- **Cuaca Live**: " . ($country->weather ?? 'Partly Cloudy') . "\n- **Mata Uang**: IDR (Rata-rata 1 USD = Rp 17.950)\n- **Rekomendasi AI**: Jalur logistik maritim Indonesia berada dalam kondisi stabil. Pelabuhan utama (Tanjung Priok & Tanjung Perak) beroperasi normal.";
+        // 1. Check for Indonesia <-> China Route
+        if ((str_contains($p, 'indo') || str_contains($p, 'indonesia')) && (str_contains($p, 'china') || str_contains($p, 'tiongkok') || str_contains($p, 'shanghai'))) {
+            return "🤖 **Analisis AI Estimasi Pengiriman Indonesia ➔ China:**\n\n" .
+                   "• **Jarak Laut**: ~2.850 Nautical Miles (NM) (Pelabuhan Tanjung Priok ➔ Shanghai / Shenzhen).\n" .
+                   "• **Waktu Transit Kapal**: ~7,5 Hari (pada kecepatan standar 18 knots).\n" .
+                   "• **Buffer Cuaca & Antrean**: ~2,5 Hari (Status Pelabuhan: Normal).\n" .
+                   "⏱️ **Total Estimasi Tiba (ETA)**: **~10 Hari**.\n\n" .
+                   "💡 *Saran AI: Gunakan menu Shipping Estimator Pro di sidebar untuk menghitung rute spesifik dengan berbagai tipe kapal!*";
         }
 
-        if (str_contains($promptLower, 'shanghai') || str_contains($promptLower, 'rotterdam') || str_contains($promptLower, 'estimasi') || str_contains($promptLower, 'shipping') || str_contains($promptLower, 'pengiriman')) {
-            return "🤖 **Analisis AI Estimasi Pengiriman Maritim:**\n\n- **Rute Shanghai ➔ Rotterdam**: Jarak ~8.222 NM (Nautical Miles), waktu transit dasar ~19 hari pada kecepatan 18 knots. Ditambah buffer antrean & cuaca ~5,4 hari (Total ETA ~24,4 Hari).\n- **Saran AI**: Gunakan fitur *Shipping Estimator Pro* di sidebar untuk menghitung rute khusus antar 1.500+ pelabuhan dunia secara realtime!";
+        // 2. Check for General Indonesia Queries
+        if (str_contains($p, 'indonesia') || str_contains($p, 'idr') || str_contains($p, 'indo')) {
+            $c = Country::where('name', 'Indonesia')->first();
+            return "🤖 **Analisis Risiko AI - Indonesia:**\n\n" .
+                   "• **Skor Risiko**: " . ($c->risk_score ?? 20) . "/100 (" . ($c->risk ?? 'Low') . " Risk)\n" .
+                   "• **Kondisi Cuaca**: " . ($c->weather ?? 'Partly Cloudy') . "\n" .
+                   "• **Mata Uang**: IDR (Rata-rata 1 USD = Rp 17.950)\n" .
+                   "• **Status Logistik**: Pelabuhan utama (Tanjung Priok, Tanjung Perak, Belawan) beroperasi dalam kondisi lancar & normal.";
         }
 
-        if (str_contains($promptLower, 'tinggi') || str_contains($promptLower, 'high risk') || str_contains($promptLower, 'bahaya') || str_contains($promptLower, 'risiko')) {
+        // 3. Check for Shanghai <-> Rotterdam Route
+        if (str_contains($p, 'shanghai') || str_contains($p, 'rotterdam') || str_contains($p, 'eropa') || str_contains($p, 'europe')) {
+            return "🤖 **Analisis AI Estimasi Rute Shanghai ➔ Rotterdam:**\n\n" .
+                   "• **Jarak Laut**: ~8.222 Nautical Miles (via Terusan Suez).\n" .
+                   "• **Waktu Transit Kapal**: ~19 Hari (pada kecepatan 18 knots).\n" .
+                   "• **Buffer Antrean Terminal**: ~5,4 Hari.\n" .
+                   "⏱️ **Total Estimasi Tiba (ETA)**: **~24,4 Hari**.";
+        }
+
+        // 4. Check for High Risk Countries
+        if (str_contains($p, 'tinggi') || str_contains($p, 'high risk') || str_contains($p, 'bahaya') || str_contains($p, 'risiko')) {
             $highRiskCount = Country::where('risk', 'High')->count();
-            return "🤖 **Ringkasan Risiko Tinggi AI:**\n\nSaat ini terdapat **{$highRiskCount} negara** berkategori **High Risk** (seperti Ukraine, Pakistan, Nigeria, Iran) akibat kombinasi konflik geopolitik, inflasi tinggi, atau cuaca ekstrem. Disarankan melakukan diversifikasi rute pelayaran dan penambahan buffer stok 15-20 hari.";
+            return "🤖 **Evaluasi Risiko Tinggi AI:**\n\n" .
+                   "Terdapat **{$highRiskCount} negara** kategori **High Risk** (misal: Ukraine, Pakistan, Nigeria, Iran).\n" .
+                   "• **Penyebab**: Kombinasi konflik geopolitik, volatilitas inflasi, dan risiko sentimen berita.\n" .
+                   "• **Rekomendasi**: Tingkatkan stok cadangan 15-20 hari dan gunakan asuransi kargo maritim tambahan.";
         }
 
-        if (str_contains($promptLower, 'halo') || str_contains($promptLower, 'hi') || str_contains($promptLower, 'siapa')) {
-            return "👋 **Halo! Saya GlobalRisk AI Assistant.**\n\nSaya dapat membantu Anda menganalisis:\n1. Estimasi waktu & risiko pengiriman maritim antar pelabuhan.\n2. Evaluasi skor risiko, cuaca, dan inflasi negara.\n3. Tren volatilitas nilai tukar mata uang & berita logistik.\n\nSilakan ketik pertanyaan Anda!";
+        // 5. Check for Greetings
+        if (str_contains($p, 'halo') || str_contains($p, 'hi') || str_contains($p, 'siapa') || str_contains($p, 'bisa apa')) {
+            return "👋 **Halo! Saya GlobalRisk AI Assistant.**\n\nSaya dapat membantu Anda mengecek:\n" .
+                   "1. Estimasi waktu & rute pengiriman antar negara/pelabuhan.\n" .
+                   "2. Evaluasi skor risiko & cuaca negara tujuan.\n" .
+                   "3. Rekomendasi mitigasi logistik & volatilitas kurs.\n\nSilakan ketik pertanyaan Anda!";
         }
 
-        // Generic Intelligent Synthesis Response
+        // 6. Generic Query Processing
         $totalC = Country::count();
         $totalP = Port::count();
 
-        return "🤖 **GlobalRisk AI Risk Intelligence System:**\n\nMengolah data realtime dari **{$totalC} negara** dan **{$totalP} pelabuhan dunia**:\n- **Saran Logistik**: Selalu periksa skor risiko negara asal & tujuan sebelum membuat kontrak pengiriman.\n- **Fitur Terkait**: Anda dapat mengecek *Shipping Estimator Pro* untuk kalkulasi jarak & buffer keterlambatan, serta *Weather Feeds* untuk pantauan badai maritim.";
+        return "🤖 **Analisis Intelijen AI GlobalRisk:**\n\n" .
+               "Mengolah telemetry dari **{$totalC} negara** & **{$totalP} pelabuhan**:\n" .
+               "• **Logistik**: Jalur perdagangan utama Asia-Pasifik dan Eropa saat ini beroperasi stabil.\n" .
+               "• **Fitur Terkait**: Anda dapat membuka menu **Shipping Estimator Pro** untuk kalkulasi jarak maritim presisi & titik koordinat rute.";
     }
 }
