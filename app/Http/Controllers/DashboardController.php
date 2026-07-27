@@ -13,6 +13,14 @@ class DashboardController extends Controller
     public function index()
     {
         // ── Load directly from DB (no live API calls) ────────────────────────
+        if (Country::count() === 0) {
+            try {
+                \Illuminate\Support\Facades\Artisan::call('db:seed', ['--force' => true]);
+            } catch (\Exception $e) {
+                // Ignore seeding errors
+            }
+        }
+
         $countries = Country::select('id','name','flag','risk','risk_score','weather','latitude','longitude','currency')
             ->get();
 
