@@ -51,6 +51,11 @@
                 <i class="bi bi-people me-1"></i> Registered Users ({{ count($users) }})
             </button>
         </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link rounded-3 py-2 fw-semibold" id="ai-tab" data-bs-toggle="tab" data-bs-target="#ai" type="button" role="tab">
+                <i class="bi bi-robot me-1 text-primary"></i> AI Risk Analyst
+            </button>
+        </li>
     </ul>
 
     <!-- Tab Content -->
@@ -315,7 +320,122 @@
             </div>
         </div>
 
+        <!-- AI Analyst Console -->
+        <div class="tab-pane fade" id="ai" role="tabpanel">
+            <div class="row g-4">
+                <div class="col-lg-4">
+                    <div class="p-4 rounded-4 bg-light border shadow-xs">
+                        <h5 class="fw-bold mb-2 text-dark"><i class="bi bi-cpu-fill text-primary me-2"></i>AI Report Generator</h5>
+                        <p class="small text-muted mb-3">Pilih negara untuk menghasilkan ringkasan eksekutif analisis risiko maritim & komoditas menggunakan AI Neural Engine.</p>
+                        
+                        <div class="mb-3">
+                            <label class="form-label small fw-bold text-secondary">Target Country Jurisdiction</label>
+                            <select id="aiCountrySelect" class="form-select rounded-3">
+                                @foreach($countries as $c)
+                                    <option value="{{ $c->id }}">{{ $c->flag }} {{ $c->name }} (Risk: {{ $c->risk_score }}/100)</option>
+                                @endforeach
+                            </select>
+                        </div>
+
+                        <button type="button" id="btnGenerateAiReport" onclick="generateAiReport()" class="btn btn-primary rounded-3 w-100 py-2.5 fw-bold d-flex align-items-center justify-content-center gap-2">
+                            <i class="bi bi-magic fs-5"></i>
+                            <span>Generate AI Executive Report</span>
+                        </button>
+                    </div>
+                </div>
+
+                <div class="col-lg-8">
+                    <div id="aiReportCard" class="p-4 rounded-4 bg-white border shadow-sm">
+                        <div class="text-center py-5 text-muted">
+                            <i class="bi bi-robot fs-1 d-block mb-2 text-primary"></i>
+                            <h6 class="fw-semibold">AI Risk Executive Analyst Console</h6>
+                            <p class="small mb-0">Pilih negara di panel sebelah kiri lalu klik "Generate AI Executive Report" untuk membuat laporan analisis intelijen otomatis.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
     </div>
 </div>
 
+@endsection
+
+@section('scripts')
+<script>
+function generateAiReport() {
+    const countryId = document.getElementById('aiCountrySelect').value;
+    const btn = document.getElementById('btnGenerateAiReport');
+    const container = document.getElementById('aiReportCard');
+
+    btn.disabled = true;
+    btn.innerHTML = `<i class="bi bi-arrow-repeat spin"></i> Processing AI Analysis...`;
+
+    fetch('/ai/generate-report', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRF-TOKEN': '{{ csrf_token() }}'
+        },
+        body: JSON.stringify({ country_id: countryId })
+    })
+    .then(res => res.json())
+    .then(data => {
+        btn.disabled = false;
+        btn.innerHTML = `<i class="bi bi-magic fs-5"></i> <span>Generate AI Executive Report</span>`;
+
+        if (data.status === 'success') {
+            const r = data.report;
+            container.innerHTML = `
+                <div class="d-flex justify-content-between align-items-center border-bottom pb-3 mb-3">
+                    <div class="d-flex align-items-center gap-2">
+                        <span class="fs-2">${r.flag}</span>
+                        <div>
+                            <h5 class="fw-bold mb-0 text-dark">Executive Risk Intelligence Report: ${r.country_name}</h5>
+                            <small class="text-muted" style="font-size: 11px;">Engine: ${r.ai_model_name} • ${r.generated_at}</small>
+                        </div>
+                    </div>
+                    <span class="badge ${r.risk_score >= 65 ? 'bg-danger' : (r.risk_score >= 35 ? 'bg-warning' : 'bg-success')} px-3 py-2 rounded-pill fs-6">
+                        Risk Score: ${r.risk_score}/100 (${r.risk_level})
+                    </span>
+                </div>
+
+                <div class="row g-3">
+                    <div class="col-12">
+                        <div class="p-3 rounded-3 bg-light border">
+                            <strong class="text-primary d-block mb-1"><i class="bi bi-shield-exclamation me-1"></i> Executive Threat Assessment</strong>
+                            <p class="mb-0 text-dark small">${r.summary}</p>
+                        </div>
+                    </div>
+
+                    <div class="col-md-6">
+                        <div class="p-3 rounded-3 border bg-white shadow-xs h-100">
+                            <strong class="text-dark d-block mb-1"><i class="bi bi-cloud-sun text-warning me-1"></i> Meteorological Impact</strong>
+                            <p class="mb-0 text-muted small">${r.weather_impact}</p>
+                        </div>
+                    </div>
+
+                    <div class="col-md-6">
+                        <div class="p-3 rounded-3 border bg-white shadow-xs h-100">
+                            <strong class="text-dark d-block mb-1"><i class="bi bi-currency-exchange text-success me-1"></i> Financial & FX Impact</strong>
+                            <p class="mb-0 text-muted small">${r.financial_impact}</p>
+                        </div>
+                    </div>
+
+                    <div class="col-12">
+                        <div class="p-3 rounded-3 bg-primary-subtle border border-primary-subtle text-primary">
+                            <strong class="d-block mb-1"><i class="bi bi-lightbulb-fill me-1"></i> Actionable Recommendation for Logistics & Trade Managers</strong>
+                            <p class="mb-0 text-dark small fw-medium">${r.actionable_recommendation}</p>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+    })
+    .catch(err => {
+        btn.disabled = false;
+        btn.innerHTML = `<i class="bi bi-magic fs-5"></i> <span>Generate AI Executive Report</span>`;
+    });
+}
+</script>
 @endsection

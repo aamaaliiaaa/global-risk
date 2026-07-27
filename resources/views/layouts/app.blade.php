@@ -67,15 +67,133 @@
             border-radius: 2px;
         }
     </style>
+    <!-- Floating AI Assistant Button -->
+    <div id="aiFloatingBtnContainer" style="position: fixed; bottom: 25px; right: 25px; z-index: 9999;">
+        <button type="button" id="toggleAiChatBtn" class="btn btn-primary rounded-circle shadow-lg p-0 d-flex align-items-center justify-content-center position-relative hover-lift" style="width: 56px; height: 56px;">
+            <i class="bi bi-robot fs-3 text-white"></i>
+            <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger border border-white" style="font-size: 9px;">AI LIVE</span>
+        </button>
+    </div>
+
+    <!-- AI Chatbot Modal Drawer -->
+    <div id="aiChatDrawer" class="shadow-lg border-0 rounded-4 bg-white overflow-hidden d-none position-fixed" style="position: fixed; bottom: 90px; right: 25px; width: 370px; max-width: 90vw; height: 490px; z-index: 9999; display: flex; flex-direction: column;">
+        <div class="p-3 bg-primary text-white d-flex justify-content-between align-items-center">
+            <div class="d-flex align-items-center gap-2">
+                <div class="rounded-circle bg-white text-primary p-2 d-flex align-items-center justify-content-center" style="width: 32px; height: 32px;">
+                    <i class="bi bi-robot fs-5"></i>
+                </div>
+                <div>
+                    <h6 class="mb-0 fw-bold">GlobalRisk AI Assistant</h6>
+                    <small style="font-size: 10px; opacity: 0.85;">Neural Risk & Logistics Intelligence</small>
+                </div>
+            </div>
+            <button type="button" id="closeAiChatBtn" class="btn-close btn-close-white" aria-label="Close"></button>
+        </div>
+
+        <div id="aiChatMessages" class="p-3 flex-grow-1 overflow-auto bg-light" style="font-size: 13px;">
+            <div class="d-flex mb-3">
+                <div class="p-3 rounded-3 bg-white border shadow-xs text-dark" style="max-width: 90%;">
+                    👋 <strong>Halo! Saya GlobalRisk AI Assistant.</strong><br><br>
+                    Saya dapat membantu Anda menganalisis:<br>
+                    • Waktu & risiko pengiriman maritim<br>
+                    • Evaluasi risiko negara & pelabuhan<br>
+                    • Analisis volatilitas kurs mata uang
+                </div>
+            </div>
+        </div>
+
+        <!-- Sample Quick Prompts -->
+        <div class="p-2 border-top bg-white d-flex gap-1 overflow-x-auto" style="white-space: nowrap;">
+            <button type="button" class="btn btn-xs btn-outline-primary rounded-pill py-0.5 px-2" style="font-size: 11px;" onclick="sendAiSamplePrompt('Kondisi Logistik Indonesia')">🇮🇩 Indonesia</button>
+            <button type="button" class="btn btn-xs btn-outline-primary rounded-pill py-0.5 px-2" style="font-size: 11px;" onclick="sendAiSamplePrompt('Rute Shanghai ke Rotterdam')">🚢 Shanghai ➔ Rotterdam</button>
+            <button type="button" class="btn btn-xs btn-outline-primary rounded-pill py-0.5 px-2" style="font-size: 11px;" onclick="sendAiSamplePrompt('Negara mana High Risk?')">⚠️ High Risk</button>
+        </div>
+
+        <div class="p-2.5 border-top bg-white d-flex gap-2 align-items-center">
+            <input type="text" id="aiChatInput" class="form-control form-control-sm rounded-pill px-3" placeholder="Ketik pertanyaan AI..." onkeypress="if(event.key==='Enter') sendAiMessage()">
+            <button type="button" onclick="sendAiMessage()" class="btn btn-sm btn-primary rounded-circle p-2 d-flex align-items-center justify-content-center" style="width: 36px; height: 36px;">
+                <i class="bi bi-send-fill text-white" style="font-size: 12px;"></i>
+            </button>
+        </div>
+    </div>
+
+    <!-- AI Chatbot Scripts -->
     <script>
         document.addEventListener("DOMContentLoaded", function () {
-            if (typeof twemoji !== 'undefined') {
-                twemoji.parse(document.body, {
-                    folder: 'svg',
-                    ext: '.svg',
-                    base: 'https://cdn.jsdelivr.net/gh/twitter/twemoji@14.0.2/assets/'
+            const toggleBtn = document.getElementById('toggleAiChatBtn');
+            const closeBtn = document.getElementById('closeAiChatBtn');
+            const drawer = document.getElementById('aiChatDrawer');
+
+            if (toggleBtn && drawer) {
+                toggleBtn.addEventListener('click', function () {
+                    drawer.classList.toggle('d-none');
                 });
             }
+
+            if (closeBtn && drawer) {
+                closeBtn.addEventListener('click', function () {
+                    drawer.classList.add('d-none');
+                });
+            }
+
+            window.sendAiSamplePrompt = function (text) {
+                const input = document.getElementById('aiChatInput');
+                if (input) {
+                    input.value = text;
+                    sendAiMessage();
+                }
+            };
+
+            window.sendAiMessage = function () {
+                const input = document.getElementById('aiChatInput');
+                const messagesContainer = document.getElementById('aiChatMessages');
+                const query = input.value.trim();
+
+                if (!query) return;
+
+                // Append User Message
+                const userDiv = document.createElement('div');
+                userDiv.className = 'd-flex justify-content-end mb-3';
+                userDiv.innerHTML = `<div class="p-2.5 rounded-3 bg-primary text-white shadow-xs" style="max-width: 85%;">${query}</div>`;
+                messagesContainer.appendChild(userDiv);
+
+                input.value = '';
+                messagesContainer.scrollTop = messagesContainer.scrollHeight;
+
+                // Loading Indicator
+                const loadingDiv = document.createElement('div');
+                loadingDiv.className = 'd-flex mb-3';
+                loadingDiv.id = 'aiLoadingDiv';
+                loadingDiv.innerHTML = `<div class="p-2.5 rounded-3 bg-white border shadow-xs text-muted"><i class="bi bi-arrow-repeat spin me-1"></i> AI sedang menganalisis data...</div>`;
+                messagesContainer.appendChild(loadingDiv);
+                messagesContainer.scrollTop = messagesContainer.scrollHeight;
+
+                // Fetch Response
+                fetch('/ai/chat', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                    },
+                    body: JSON.stringify({ message: query })
+                })
+                .then(res => res.json())
+                .then(data => {
+                    const loadEl = document.getElementById('aiLoadingDiv');
+                    if (loadEl) loadEl.remove();
+
+                    const botDiv = document.createElement('div');
+                    botDiv.className = 'd-flex mb-3';
+                    let formattedResp = (data.response || 'Terjadi kesalahan sistem AI.').replace(/\n/g, '<br>');
+                    botDiv.innerHTML = `<div class="p-3 rounded-3 bg-white border shadow-xs text-dark" style="max-width: 90%;">${formattedResp}</div>`;
+                    messagesContainer.appendChild(botDiv);
+                    messagesContainer.scrollTop = messagesContainer.scrollHeight;
+                })
+                .catch(err => {
+                    const loadEl = document.getElementById('aiLoadingDiv');
+                    if (loadEl) loadEl.remove();
+                });
+            };
         });
     </script>
 </body>

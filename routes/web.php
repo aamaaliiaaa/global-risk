@@ -11,6 +11,7 @@ use App\Http\Controllers\CompareController;
 use App\Http\Controllers\WatchlistController;
 use App\Http\Controllers\AdminController;
 use App\Http\Controllers\ShippingEstimatorController;
+use App\Http\Controllers\AIController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', function () {
@@ -19,6 +20,10 @@ Route::get('/', function () {
 
 Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
+
+    // AI Intelligence Endpoints
+    Route::post('/ai/generate-report', [AIController::class, 'generateReport'])->name('ai.report');
+    Route::post('/ai/chat', [AIController::class, 'chat'])->name('ai.chat');
     
     // Countries List and Show
     Route::get('/countries', [CountryController::class, 'index'])->name('countries.index');
