@@ -34,7 +34,7 @@
                 <div class="d-none d-md-block text-start" style="line-height: 1.15;">
                     <div class="fw-bold text-dark" style="font-size: 13px;">{{ Auth::user()->name ?? 'User' }}</div>
                     <small class="text-muted" style="font-size: 10.5px;">
-                        {{ Auth::user() && Auth::user()->is_admin ? 'Administrator' : 'Importer' }}
+                        {{ Auth::user() && (Auth::user()->is_admin || Auth::user()->email === 'admin@globalrisk.com') ? 'Administrator' : 'Importer' }}
                     </small>
                 </div>
                 <i class="bi bi-chevron-down text-muted ms-1" style="font-size: 11px;"></i>
@@ -45,7 +45,7 @@
                     <div class="fw-bold text-dark" style="font-size: 13px;">{{ Auth::user()->name ?? 'User' }}</div>
                     <div class="text-muted small" style="font-size: 11px;">{{ Auth::user()->email ?? '' }}</div>
                 </li>
-                @if(Auth::user() && Auth::user()->is_admin)
+                @if(Auth::user() && (Auth::user()->is_admin || Auth::user()->email === 'admin@globalrisk.com'))
                 <li>
                     <a class="dropdown-item rounded-3 py-2 text-primary fw-medium" href="{{ route('admin.index') }}">
                         <i class="bi bi-shield-lock me-2"></i> Admin Panel

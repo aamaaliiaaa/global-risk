@@ -85,7 +85,7 @@
         </ul>
 
         <!-- Section: System & Admin -->
-        @if(Auth::check() && Auth::user()->is_admin)
+        @if(Auth::check() && (Auth::user()->is_admin || Auth::user()->email === 'admin@globalrisk.com'))
         <div class="menu-header">ADMINISTRATION</div>
         <ul>
             <li>
